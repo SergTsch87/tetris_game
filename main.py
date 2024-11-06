@@ -4,7 +4,6 @@ import pygame, sys
 # env1\bin\python -m pip freeze > requirements.txt
 # env2\bin\python -m pip install -r requirements.txt
 
-
 pygame.init()
 
 SCREEN_WIDTH = 300   #  10 чарунок по 30 пкс кожна
@@ -15,7 +14,8 @@ pygame.display.set_caption("Tetris")
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-BLUE = (0, 0, 255)
+# BLUE = (0, 0, 255)
+BLUE = (0, 255, 255)
 HOWER_COLOR = (150, 150, 150)
 GREY = (128, 128, 128)
 
@@ -37,23 +37,53 @@ def draw_grid():
     for y in range(GRID_HEIGHT):
         for x in range(GRID_WIDTH):
             rect_obj = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-            pygame.draw.rect(screen, GREY, rect_obj, 1)
+            pygame.draw.rect(screen, BLACK, rect_obj, 1)
 
 
-def main():
+# Визначення тетріміно (лінійний блок)
+class Tetromino:
+    def __init__(self) -> None:
+        # поч-ві коорд-ти тетріміно
+        self.x = GRID_WIDTH // 2 - 2
+        self.y = 0
+        self.shape = [(0, 0), (1, 0), (2, 0), (3, 0)]
+        self.color = BLUE
+
+    def draw(self):
+        for cell in self.shape:
+            rect_obj = pygame.Rect((self.x + cell[0]) * CELL_SIZE, (self.y + cell[1]) * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+            pygame.draw.rect(screen, self.color, rect_obj)
     
-    # Основний ігровий цикл
+    # Переміщення тетроміно вниз
+    def move_down(self):
+        self.y += 1
+
+
+# Основний ігровий цикл
+def main():
+    grid = create_array_for_grid()
+    tetromino = Tetromino()
+    drop_speed = 500  # Швидкість падіння (мс)
+    last_drop_time = pygame.time.get_ticks()  # Час останнього падіння
+
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
+        # Оновлення положення тетріміно
+        current_time = pygame.time.get_ticks()
+        if current_time - last_drop_time > drop_speed:
+            tetromino.move_down()
+            last_drop_time = current_time
+        
         # Заповнення екрану кольором тла
         # screen.fill(BLACK)
-        screen.fill(BLACK)
+        screen.fill(GREY)
 
         draw_grid()
+        tetromino.draw()
 
         # Оновлення екрану
         pygame.display.flip()
