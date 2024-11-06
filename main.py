@@ -56,7 +56,19 @@ class Tetromino:
     
     # Переміщення тетроміно вниз
     def move_down(self):
-        self.y += 1
+        if self.y < GRID_HEIGHT - 1:
+            self.y += 1
+
+    def move_left(self):
+        if self.x > 0 and self.y < GRID_HEIGHT - 1:
+            self.x -= 1
+
+    def move_right(self):
+        # Мій варіант:
+        # if self.x < GRID_WIDTH - len(self.shape):
+        # Варіант від ChatGPT:
+        if self.x + max(cell[0] for cell in self.shape) < GRID_WIDTH - 1 and self.y < GRID_HEIGHT - 1:
+            self.x += 1
 
 
 # Основний ігровий цикл
@@ -71,6 +83,13 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    tetromino.move_left()
+                elif event.key == pygame.K_RIGHT:
+                    tetromino.move_right()
+                elif event.key == pygame.K_DOWN:
+                    tetromino.move_down()
 
         # Оновлення положення тетріміно
         current_time = pygame.time.get_ticks()
