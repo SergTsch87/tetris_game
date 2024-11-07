@@ -42,12 +42,15 @@ def draw_grid():
 
 # Визначення тетріміно (лінійний блок)
 class Tetromino:
+    instances = []
+
     def __init__(self) -> None:
         # поч-ві коорд-ти тетріміно
         self.x = GRID_WIDTH // 2 - 2
         self.y = 0
         self.shape = [(0, 0), (1, 0), (2, 0), (3, 0)]
         self.color = BLUE
+        Tetromino.instances.append(self)
 
     def draw(self):
         for cell in self.shape:
@@ -60,14 +63,15 @@ class Tetromino:
             self.y += 1
 
     def move_left(self):
-        if self.x > 0 and self.y < GRID_HEIGHT - 1:
+        if self.x > 0:
             self.x -= 1
 
     def move_right(self):
-        # Мій варіант:
+        # Мій варіант: - такий код не враховує різноманітність форм тетраміно!..
         # if self.x < GRID_WIDTH - len(self.shape):
-        # Варіант від ChatGPT:
-        if self.x + max(cell[0] for cell in self.shape) < GRID_WIDTH - 1 and self.y < GRID_HEIGHT - 1:
+
+        # Варіант від ChatGPT: - а такий код варто оптимізувати, - щоб був без циклів
+        if self.x + max(cell[0] for cell in self.shape) < GRID_WIDTH - 1:
             self.x += 1
 
 
@@ -94,7 +98,15 @@ def main():
         # Оновлення положення тетріміно
         current_time = pygame.time.get_ticks()
         if current_time - last_drop_time > drop_speed:
-            tetromino.move_down()
+            # Якщо блок знаходиться на нижній межі, тоді створити новий
+            if tetromino.y + max(cell[1] for cell in tetromino.shape) >= GRID_HEIGHT - 1:
+                tetromino = Tetromino()  # Новий блок згори
+            else:
+                tetromino.move_down()
+
+            # # print(len(Tetromino.instances))
+            # print(Tetromino.instances)
+            
             last_drop_time = current_time
         
         # Заповнення екрану кольором тла
@@ -103,6 +115,10 @@ def main():
 
         draw_grid()
         tetromino.draw()
+
+        # print(len(Tetromino.instances))
+        # print(Tetromino.instances[0].y)
+            
 
         # Оновлення екрану
         pygame.display.flip()
