@@ -76,25 +76,28 @@ def draw_next_tetromino(shape, color):
         pygame.draw.rect(screen, color, (cell_x, cell_y, CELL_SIZE, CELL_SIZE))
 
 
+# Випадковий вибір тетроміно
+def get_tetromino():
+    current_shape = random.choice(list(TETROMINO_SHAPES.keys()))
+    shape = TETROMINO_SHAPES[current_shape]
+    color = TETROMINO_COLORS[current_shape]
+    return Tetromino(shape, color)
+
 # Визначення тетріміно (лінійний блок)
 class Tetromino:
     instances = []
 
     def __init__(self, shape, color) -> None:
-        # поч-ві коорд-ти тетріміно
+        # поч-ві (відносні) коорд-ти тетріміно
         self.x = GRID_WIDTH // 2 - 2
         self.y = 0      # Початкова позиція тетроміно на основній сітці
-        
-        # # Випадковий вибір форми
-        # select_tetromino = random.choice(list(TETROMINO_SHAPES.keys()))
-        # self.shape = TETROMINO_SHAPES[select_tetromino]
-        # self.color = TETROMINO_COLORS[select_tetromino]
         self.shape = shape
         self.color = color
         Tetromino.instances.append(self)
 
     def draw(self):
         for cell in self.shape:
+            # абсолютні коорд-ти:
             cell_x = (self.x + cell[0]) * CELL_SIZE
             cell_y = NEXT_AREA_HEIGHT + (self.y + cell[1]) * CELL_SIZE
             rect_obj = pygame.Rect(cell_x, cell_y, CELL_SIZE, CELL_SIZE)
@@ -120,29 +123,16 @@ class Tetromino:
 
 # Основний ігровий цикл
 def main():
-    grid = create_array_for_grid()
+    # grid = create_array_for_grid()
     
-    # Випадковий вибір форми
-    current_shape = random.choice(list(TETROMINO_SHAPES.keys()))
-    # tetromino = Tetromino('T', (128, 0, 128))
-    shape = TETROMINO_SHAPES[current_shape]
-    color = TETROMINO_COLORS[current_shape]
-
-    current_tetromino = Tetromino(shape, color)
+    # Випадковий вибір поточного тетроміно
+    current_tetromino = get_tetromino()
     
     drop_speed = 500  # Швидкість падіння (мс)
     last_drop_time = pygame.time.get_ticks()  # Час останнього падіння
     
-    # Випадковий вибір форми
-    next_shape = random.choice(list(TETROMINO_SHAPES.keys()))
-    # tetromino = Tetromino('T', (128, 0, 128))
-    shape = TETROMINO_SHAPES[next_shape]
-    color = TETROMINO_COLORS[next_shape]
-    next_tetromino = Tetromino(shape, color)
-    # tetromino = Tetromino()
-    # select_tetromino = random.choice(list(TETROMINO_SHAPES.keys()))
-    # tetromino.shape = TETROMINO_SHAPES[select_tetromino]
-    # tetromino.color = TETROMINO_COLORS[select_tetromino]
+    # Випадковий вибір наступного тетроміно
+    next_tetromino = get_tetromino()
     
     running = True    
     while running:
@@ -163,41 +153,19 @@ def main():
             # Якщо блок знаходиться на нижній межі, тоді створити новий
             if current_tetromino.y + max(cell[1] for cell in current_tetromino.shape) >= GRID_HEIGHT - 1:
                 current_tetromino = next_tetromino
-                
-                next_shape = random.choice(list(TETROMINO_SHAPES.keys()))
-                shape = TETROMINO_SHAPES[next_shape]
-                color = TETROMINO_COLORS[next_shape]
-                next_tetromino = Tetromino(shape, color)  # Новий блок згори
+                next_tetromino = get_tetromino()  # Новий блок згори
             else:
                 current_tetromino.move_down()
-
-            # # print(len(Tetromino.instances))
-            # print(Tetromino.instances)
             
             last_drop_time = current_time
         
         # Заповнення екрану кольором тла
-        # screen.fill(BLACK)
         screen.fill(GREY)
 
         draw_grid()
         current_tetromino.draw()
-        
-        # Випадковий вибір форми
-        # next_shape = 'L'
-        # next_color = (255, 165, 0)
-        
-        # select_tetromino = random.choice(list(TETROMINO_SHAPES.keys()))
-        # # tetromino = Tetromino('T', (128, 0, 128))
-        # next_shape = TETROMINO_SHAPES[select_tetromino]
-        # next_color = TETROMINO_COLORS[select_tetromino]
-        
+                
         draw_next_tetromino(next_tetromino.shape, next_tetromino.color)
-        # draw_next_tetromino(TETROMINO_SHAPES[next_shape], next_color)
-
-        # print(len(Tetromino.instances))
-        # print(Tetromino.instances[0].y)
-            
 
         # Оновлення екрану
         pygame.display.flip()
@@ -210,5 +178,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# print(list(TETROMINO_SHAPES.keys()))
