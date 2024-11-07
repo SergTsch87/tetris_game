@@ -1,5 +1,5 @@
 #!usr/bin/env
-import pygame, sys
+import pygame, sys, random
 
 # env1\bin\python -m pip freeze > requirements.txt
 # env2\bin\python -m pip install -r requirements.txt
@@ -28,6 +28,15 @@ CELL_SIZE = 30
 GRID_WIDTH = SCREEN_WIDTH // CELL_SIZE   # 10 комірок
 GRID_HEIGHT = SCREEN_HEIGHT // CELL_SIZE   # 20 комірок
 
+TETROMINO_SHAPES = {
+                    'I': [(0, 0), (1, 0), (2, 0), (3, 0)],
+                    'O': [(0, 0), (1, 0), (0, 1), (1, 1)],
+                    'L': [(0, 0), (0, 1), (0, 2), (1, 2)],
+                    'J': [(1, 0), (1, 1), (1, 2), (0, 2)],
+                    'T': [(0, 0), (1, 0), (2, 0), (1, 1)],
+                    'S': [(1, 0), (2, 0), (0, 1), (1, 1)],
+                    'z': [(0, 0), (1, 0), (1, 1), (2, 1)]
+}
 
 def create_array_for_grid():
     return [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
@@ -48,8 +57,9 @@ class Tetromino:
         # поч-ві коорд-ти тетріміно
         self.x = GRID_WIDTH // 2 - 2
         self.y = 0
-        self.shape = [(0, 0), (1, 0), (2, 0), (3, 0)]
-        self.color = BLUE
+        # Випадковий вибір форми
+        self.shape = random.choice(list(TETROMINO_SHAPES.values()))
+        self.color = random.choice([BLUE, RED])
         Tetromino.instances.append(self)
 
     def draw(self):
