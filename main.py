@@ -1,8 +1,11 @@
-#!usr/bin/env
+#!usr/bin/env python3
 import pygame, sys, random
 
 # env1\bin\python -m pip freeze > requirements.txt
 # env2\bin\python -m pip install -r requirements.txt
+
+# https://www.freetetris.org/game.php
+# Подивись, як обертаються тетраміно у різних випадках!
 
 pygame.init()
 
@@ -81,7 +84,18 @@ def get_tetromino():
     current_shape = random.choice(list(TETROMINO_SHAPES.keys()))
     shape = TETROMINO_SHAPES[current_shape]
     color = TETROMINO_COLORS[current_shape]
+    # min_x = min(cell[0] for cell in current_shape)
+    # max_x = max(cell[0] for cell in current_shape)
+    # min_y = min(cell[1] for cell in current_shape)
+    # max_y = max(cell[1] for cell in current_shape)
+    # max_min_x_y = [min_x, max_x, min_y, max_y]
     return Tetromino(shape, color)
+
+
+def list_coords_bottom_field(all_coords, tetromino_shape_coords):
+    all_coords += tetromino_shape_coords
+    return all_coords
+
 
 # Визначення тетріміно (лінійний блок)
 class Tetromino:
@@ -107,23 +121,76 @@ class Tetromino:
     def move_down(self):
         if self.y < GRID_HEIGHT - 1:
             self.y += 1
+        print(self.y)
+        # else:
+        #     self.y = y
+
+
+    @property
+    def cell_x(self):
+        # Повертає список X-координат для фігури із врахуванням поточного зміщення
+        return [cell[0] + self.x for cell in self.shape]
+    
+    @property
+    def cell_y(self):
+        # Повертає список Y-координат для фігури із врахуванням поточного зміщення
+        return [cell[1] + self.y for cell in self.shape]
+
 
     def move_left(self):
-        if self.x > 0:
+        # # if self.x > 0:
+        # min_x = min(cell[0] for cell in self.shape)
+        if min(self.cell_x) > 0:
             self.x -= 1
 
-    def move_right(self):
-        # Мій варіант: - такий код не враховує різноманітність форм тетраміно!..
-        # if self.x < GRID_WIDTH - len(self.shape):
 
-        # Варіант від ChatGPT: - а такий код варто оптимізувати, - щоб був без циклів
-        if self.x + max(cell[0] for cell in self.shape) < GRID_WIDTH - 1:
+    def move_right(self):
+        # # Мій варіант: - такий код не враховує різноманітність форм тетраміно!..
+        # # if self.x < GRID_WIDTH - len(self.shape):
+
+        # # Варіант від ChatGPT: - а такий код варто оптимізувати, - щоб був без циклів
+        # max_x = max(cell[0] for cell in self.shape)
+        # if self.x + max_x < GRID_WIDTH - 1:
+        if max(self.cell_x) < GRID_WIDTH - 1:
             self.x += 1
+
+
+    def rotate(self):
+        # Обертаємо фігуру на 90 градусів за годинниковою стрілкою
+        rotated_shape = [(-y, x) for x, y in self.shape]
+
+        # Отримуємо координати обмеженої фігури
+        rotated_cell_x = [cell[0] + self.x for cell in rotated_shape]
+        rotated_cell_y = [cell[1] + self.y for cell in rotated_shape]
+
+        # Перевіряємо, чи виходить фігура за межі екрану після обертання
+        min_x, max_x = min(rotated_cell_x), max(rotated_cell_x)
+        min_y, max_y = min(rotated_cell_y), max(rotated_cell_y)
+
+        # Корекція положення по X
+        if min_x < 0:
+            self.x -= min_x  # Зсуваємо праворуч
+        elif max_x >= SCREEN_WIDTH // CELL_SIZE:
+            self.x -= max_x - (SCREEN_WIDTH // CELL_SIZE - 1)  # Зсуваємо ліворуч
+
+        # Корекція положення по Y
+        if max_y >= SCREEN_HEIGHT // CELL_SIZE:
+            return   # скасовуємо обертання, якщо не вдається вирівняти по Y
+        
+        # # if (0 <= min_x <= max_x <= SCREEN_WIDTH) and (max_y <= SCREEN_HEIGHT):
+        # if (0 <= min_x <= max_x <= SCREEN_WIDTH):
+        # # if (self.x + min_x < 0) or (self.x + max_x >= SCREEN_WIDTH // CELL_SIZE) or (self.y + max_y <= SCREEN_HEIGHT // CELL_SIZE):
+        #     return
+        #     # Якщо виходить за межі, тоді обертання не буде
+
+        # Якщо колізії немає, оновлюємо форму
+        self.shape = rotated_shape
 
 
 # Основний ігровий цикл
 def main():
     # grid = create_array_for_grid()
+    all_coords = []
     
     # Випадковий вибір поточного тетроміно
     current_tetromino = get_tetromino()
@@ -146,12 +213,18 @@ def main():
                     current_tetromino.move_right()
                 elif event.key == pygame.K_DOWN:
                     current_tetromino.move_down()
+                elif event.key == pygame.K_UP:
+                    current_tetromino.rotate()
 
         # Оновлення положення тетріміно
         current_time = pygame.time.get_ticks()
         if current_time - last_drop_time > drop_speed:
             # Якщо блок знаходиться на нижній межі, тоді створити новий
             if current_tetromino.y + max(cell[1] for cell in current_tetromino.shape) >= GRID_HEIGHT - 1:
+                # Тут буде зупинка фігури
+                all_coords = list_coords_bottom_field(all_coords, current_tetromino.shape)
+                # list(TETROMINO_SHAPES.keys())
+
                 current_tetromino = next_tetromino
                 next_tetromino = get_tetromino()  # Новий блок згори
             else:
