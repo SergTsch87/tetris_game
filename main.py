@@ -68,10 +68,21 @@ def create_array_for_grid():
 
 
 # def list_coords_bottom_field(all_coords, tetromino_shape_coords, color):
-def list_coords_bottom_field(all_coords, tetromino_shape_coords):
+def list_coords_bottom_field(all_coords, cell_x, cell_y, tetromino_shape_coords):
     # Кожне x, y зі списку tetromino_shape_coords множимо на CELL_SIZE
     # Як визначити хоча б одну координату, в якій зупинилась фігура внизу поля?..
-    all_coords.extend(tetromino_shape_coords)
+    
+    # list_cells_x_y = list(zip(current_tetromino.cell_x, current_tetromino.cell_y))
+    # print(f'new_list_x == {list(map(lambda x: x * CELL_SIZE, cell_x))}')
+    # print(f'new_list_y == {list(map(lambda y: y * CELL_SIZE, cell_y))}')
+    new_list_x = list(map(lambda x: x * CELL_SIZE, cell_x))
+    new_list_y = list(map(lambda y: y * CELL_SIZE, cell_y))
+    list_cells_x_y = list(zip(new_list_x, new_list_y))
+    # list_cells_x_y = list(zip(cell_x, cell_y))
+    print(f'list_cells_x_y == {list_cells_x_y}')
+    
+    # all_coords.extend(tetromino_shape_coords)
+    all_coords.extend(list_cells_x_y)
     print(f' all_coords == {all_coords}')
     return all_coords
     # return all_coords, color
@@ -79,9 +90,11 @@ def list_coords_bottom_field(all_coords, tetromino_shape_coords):
 def draw_bottom_field(all_coords, color):
     for cell in all_coords:
         # абсолютні коорд-ти:
-        cell_x = cell[0] * CELL_SIZE
-        cell_y = cell[1] * CELL_SIZE
-        # print(f'(cell_x, cell_y) == ({cell_x}, {cell_y})')
+        # cell_x = cell[0] * CELL_SIZE
+        # cell_y = cell[1] * CELL_SIZE
+        cell_x = cell[0]
+        cell_y = cell[1]
+        print(f'(cell_x, cell_y) == ({cell_x}, {cell_y})')
         rect_obj = pygame.Rect(cell_x, cell_y, CELL_SIZE, CELL_SIZE)
         # pygame.draw.rect(screen, color, rect_obj, 1)
         pygame.draw.rect(screen, BLUE, rect_obj, 1)
@@ -109,6 +122,9 @@ def get_tetromino():
     color = TETROMINO_COLORS[current_shape]
     return Tetromino(shape, color)
 
+
+def print_test(var):
+    print(f'{vars.__name__} == {var}')
 
 # Визначення тетріміно (лінійний блок)
 class Tetromino:
@@ -207,6 +223,7 @@ def main():
     
     # Випадковий вибір поточного тетроміно
     current_tetromino = get_tetromino()
+    fix_tetromino = get_tetromino()
     
     drop_speed = 500  # Швидкість падіння (мс)
     last_drop_time = pygame.time.get_ticks()  # Час останнього падіння
@@ -233,13 +250,36 @@ def main():
         current_time = pygame.time.get_ticks()
         if current_time - last_drop_time > drop_speed:
             # Якщо блок знаходиться на нижній межі, тоді створити новий
-            if current_tetromino.y + max(cell[1] for cell in current_tetromino.shape) >= GRID_HEIGHT - 1:
+            # if current_tetromino.y + max(cell[1] for cell in current_tetromino.shape) >= GRID_HEIGHT - 1:
+            if current_tetromino.y + max(current_tetromino.cell_y) >= GRID_HEIGHT - 1:
                 # Тут буде зупинка фігури
+                print('if current_tetromino.y + max(current_tetromino.cell_y) >= GRID_HEIGHT - 1:')
+                print(f'all_coords == {all_coords}')
+                print(f'current_tetromino.cell_x == {current_tetromino.cell_x}')
+                print(f'current_tetromino.cell_y == {current_tetromino.cell_y}')
+                print(f'current_tetromino.shape == {current_tetromino.shape}')
                 # all_coords = list_coords_bottom_field(all_coords, current_tetromino.shape, current_tetromino.color)
-                all_coords = list_coords_bottom_field(all_coords, current_tetromino.shape)
+                all_coords = list_coords_bottom_field(all_coords, current_tetromino.cell_x, current_tetromino.cell_y, current_tetromino.shape)
                 # list(TETROMINO_SHAPES.keys())
-                draw_bottom_field(all_coords, current_tetromino.color)
-                pygame.display.flip()
+                print(f'all_coords == {all_coords}')
+                print('The end\n')
+                
+                fix_tetromino = current_tetromino
+
+                # draw_bottom_field(all_coords, current_tetromino.color)
+                draw_bottom_field(all_coords, fix_tetromino.color)
+                # pygame.display.flip()
+
+                print(f'(cell_X, cell_Y) == ({fix_tetromino.cell_x}, {fix_tetromino.cell_y})')
+                # приклад: (cell_X, cell_Y) == ([7, 6, 5, 5], [20, 20, 20, 19])
+                # print(f'(X, Y) == ({fix_tetromino.x}, {fix_tetromino.y})')
+                # # приклад: (X, Y) == (7, 19)
+
+                list_cells_x_y = list(zip(fix_tetromino.cell_x, fix_tetromino.cell_y))
+                print(f'list_cells_x_y == {list_cells_x_y}')
+
+                # print_test(list_cells_x_y)
+
 
                 current_tetromino = next_tetromino
                 next_tetromino = get_tetromino()  # Новий блок згори
