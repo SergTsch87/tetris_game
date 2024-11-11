@@ -94,10 +94,10 @@ def draw_bottom_field(all_coords, color):
         # cell_y = cell[1] * CELL_SIZE
         cell_x = cell[0]
         cell_y = cell[1]
-        print(f'(cell_x, cell_y) == ({cell_x}, {cell_y})')
+        # print(f'(cell_x, cell_y) == ({cell_x}, {cell_y})')
         rect_obj = pygame.Rect(cell_x, cell_y, CELL_SIZE, CELL_SIZE)
-        # pygame.draw.rect(screen, color, rect_obj, 1)
-        pygame.draw.rect(screen, BLUE, rect_obj, 1)
+        pygame.draw.rect(screen, color, rect_obj)
+        # pygame.draw.rect(screen, BLUE, rect_obj)
 
 
 def draw_grid():
@@ -250,8 +250,12 @@ def main():
         current_time = pygame.time.get_ticks()
         if current_time - last_drop_time > drop_speed:
             # Якщо блок знаходиться на нижній межі, тоді створити новий
-            # if current_tetromino.y + max(cell[1] for cell in current_tetromino.shape) >= GRID_HEIGHT - 1:
-            if current_tetromino.y + max(current_tetromino.cell_y) >= GRID_HEIGHT - 1:
+            
+            # !!!
+            # Саме після заміни першого коду на другий (current_tetromino.shape на current_tetromino.cell_y)
+            # фігури й почали доходити тільки до 360-ти пкс
+            if current_tetromino.y + max(cell[1] for cell in current_tetromino.shape) >= GRID_HEIGHT - 1:
+            # if current_tetromino.y + max(current_tetromino.cell_y) >= GRID_HEIGHT - 1:
                 # Тут буде зупинка фігури
                 print('if current_tetromino.y + max(current_tetromino.cell_y) >= GRID_HEIGHT - 1:')
                 print(f'all_coords == {all_coords}')
@@ -267,10 +271,10 @@ def main():
                 fix_tetromino = current_tetromino
 
                 # draw_bottom_field(all_coords, current_tetromino.color)
-                draw_bottom_field(all_coords, fix_tetromino.color)
+                # draw_bottom_field(all_coords, fix_tetromino.color)
                 # pygame.display.flip()
 
-                print(f'(cell_X, cell_Y) == ({fix_tetromino.cell_x}, {fix_tetromino.cell_y})')
+                # print(f'(cell_X, cell_Y) == ({fix_tetromino.cell_x}, {fix_tetromino.cell_y})')
                 # приклад: (cell_X, cell_Y) == ([7, 6, 5, 5], [20, 20, 20, 19])
                 # print(f'(X, Y) == ({fix_tetromino.x}, {fix_tetromino.y})')
                 # # приклад: (X, Y) == (7, 19)
@@ -293,6 +297,8 @@ def main():
 
         draw_grid()
         current_tetromino.draw()
+
+        draw_bottom_field(all_coords, fix_tetromino.color)
                 
         draw_next_tetromino(next_tetromino.shape, next_tetromino.color)
 
