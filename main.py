@@ -6,9 +6,11 @@ import pygame, sys, random
 
 # !!!
 # Tetris: Rotate system SRS
-
 # https://www.freetetris.org/game.php
 # Подивись, як обертаються тетраміно у різних випадках!
+
+# Для порівнянь двох комітів:
+# https://github.com/SergTsch87/tetris_game/compare/9c806b4..531a140
 
 pygame.init()
 
@@ -36,6 +38,7 @@ GRID_HEIGHT = 20 # комірок
 
 # Висота області для наступного тетраміно
 NEXT_AREA_HEIGHT = 3 * CELL_SIZE
+# NEXT_AREA_HEIGHT = 0 * CELL_SIZE
 
 # Загальна висота екрану (ігрова зона + область для наступного тетраміно)
 SCREEN_WIDTH = GRID_WIDTH * CELL_SIZE
@@ -63,15 +66,23 @@ TETROMINO_COLORS = {
                     'z': RED
 }
 
+
+def some_new_func():
+    pass
+
+
+# Not Using!
 def create_array_for_grid():
+    a_list = [1 for _ in range(12)] # add some conflict code | Resolve in mergeconflict
+# feature-branch
 
-    a = [item for _ in range(12)] # add some conflict code
-
+    # Ігрове поле '10 x 20', початково усі чарунки порожні
     return [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
 
 
 # def list_coords_bottom_field(all_coords, tetromino_shape_coords, color):
-def list_coords_bottom_field(all_coords, cell_x, cell_y, tetromino_shape_coords):
+# def list_coords_bottom_field(all_coords, cell_x, cell_y, tetromino_shape_coords):
+def list_coords_bottom_field(all_coords, cell_x, cell_y):
     # Кожне x, y зі списку tetromino_shape_coords множимо на CELL_SIZE
     # Як визначити хоча б одну координату, в якій зупинилась фігура внизу поля?..
     
@@ -82,15 +93,16 @@ def list_coords_bottom_field(all_coords, cell_x, cell_y, tetromino_shape_coords)
     new_list_y = list(map(lambda y: y * CELL_SIZE, cell_y))
     list_cells_x_y = list(zip(new_list_x, new_list_y))
     # list_cells_x_y = list(zip(cell_x, cell_y))
-    print(f'list_cells_x_y == {list_cells_x_y}')
+    # print(f'\ndef list_coords_bottom_field:  list_cells_x_y == {list_cells_x_y}\n')
     
     # all_coords.extend(tetromino_shape_coords)
     all_coords.extend(list_cells_x_y)
-    print(f' all_coords == {all_coords}')
+    # print(f'\ndef list_coords_bottom_field:  all_coords == {all_coords}\n')
     return all_coords
     # return all_coords, color
 
 def draw_bottom_field(all_coords, color):
+    # print(f'\ndraw_bottom_field:  all_coords == {all_coords}\n')
     for cell in all_coords:
         # абсолютні коорд-ти:
         # cell_x = cell[0] * CELL_SIZE
@@ -98,11 +110,20 @@ def draw_bottom_field(all_coords, color):
         cell_x = cell[0]
         cell_y = cell[1]
         # print(f'(cell_x, cell_y) == ({cell_x}, {cell_y})')
-        rect_obj = pygame.Rect(cell_x, cell_y, CELL_SIZE, CELL_SIZE)
+        # rect_obj = pygame.Rect(cell_x, cell_y, CELL_SIZE, CELL_SIZE)
+        # rect_obj = pygame.Rect(cell_x, NEXT_AREA_HEIGHT + cell_y, CELL_SIZE, CELL_SIZE)
+        
+        # !!! Це трохи допомогло!
+        # Але, фігури дивно пересуваються наприкінці: за дві чарунки до низу поля, вони затримуються, а потім швидко "перестрибуються через дві чарунки".
+        # А деякі фігури можуть ще й зависнути, не рухаючись вниз (тільки по горизонталі).
+        # "Розвиснути" можуть, якщо почати їх крутити
+        rect_obj = pygame.Rect(cell_x, 2 * CELL_SIZE + cell_y, CELL_SIZE, CELL_SIZE)
         pygame.draw.rect(screen, color, rect_obj)
         # pygame.draw.rect(screen, BLUE, rect_obj)
+        # print(f'\ndef draw_bottom_field:  screen == {screen}\n')
 
 
+# Чи нема тут помилки?..
 def draw_grid():
     for y in range(GRID_HEIGHT):
         for x in range(GRID_WIDTH):
@@ -129,6 +150,21 @@ def get_tetromino():
 def print_test(var):
     print(f'{vars.__name__} == {var}')
 
+
+def rotate_tetromino(coords_figure_x_y):
+    return [(-y, x) for x, y in coords_figure_x_y]
+    
+
+# Not Using!
+def check_collision(coords_figure_x_y, grid_binary_coords):
+    for x, y in coords_figure_x_y:
+        if not(0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT):
+            return True
+        if grid_binary_coords[y][x] == 1:
+            return True
+    return False
+
+
 # Визначення тетріміно (лінійний блок)
 class Tetromino:
     instances = []
@@ -137,6 +173,8 @@ class Tetromino:
         # поч-ві (відносні) коорд-ти тетріміно
         self.x = GRID_WIDTH // 2 - 2
         self.y = 0      # Початкова позиція тетроміно на основній сітці
+        # self.y = -3      # Початкова позиція тетроміно на основній сітці
+        # self.y = NEXT_AREA_HEIGHT // CELL_SIZE     # Початкова позиція тетроміно на основній сітці
         self.shape = shape
         self.color = color
         Tetromino.instances.append(self)
@@ -145,13 +183,22 @@ class Tetromino:
         for cell in self.shape:
             # абсолютні коорд-ти:
             cell_x = (self.x + cell[0]) * CELL_SIZE
-            cell_y = NEXT_AREA_HEIGHT + (self.y + cell[1]) * CELL_SIZE
+            
+            # cell_y = NEXT_AREA_HEIGHT + (self.y + cell[1]) * CELL_SIZE  # Тут фігури падають з самого верха, і промальовуються за 3 чарунки перед низом
+            cell_y = (self.y + cell[1]) * CELL_SIZE  # Тут фігури падають з 3-ї чарунки, пролітають до низу, і промальовуються за 3 чарунки перед низом
+            
+            # print(f'\ndef draw(self):  cell_y == {cell_y}\n')
             rect_obj = pygame.Rect(cell_x, cell_y, CELL_SIZE, CELL_SIZE)
             pygame.draw.rect(screen, self.color, rect_obj)
+        # print(f'\ndef draw(self): last in for:  cell_y == {cell_y}\n')
     
     # Переміщення тетроміно вниз
     def move_down(self):
+        # print(f'\n def move_down:  self.y == {self.y}')
+        # print(f'def move_down:  GRID_HEIGHT == {GRID_HEIGHT}\n')
         if self.y < GRID_HEIGHT - 1:
+        # if self.y < 2 * GRID_HEIGHT - 1:  # Цей код не впливає на "540 пкс"...
+        # if self.y < (NEXT_AREA_HEIGHT // CELL_SIZE + GRID_HEIGHT - 1):
             self.y += 1
         # print(self.y)
         # else:
@@ -165,8 +212,14 @@ class Tetromino:
     
     @property
     def cell_y(self):
+        # print(f'\n@property: self.shape == {self.shape}')
+        # print(f'@property: [cell[1] for cell in self.shape] == {[cell[1] for cell in self.shape]}')
+        # print(f'@property: self.y == {self.y}')
+        # print(f'@property: return  [cell[1] + self.y for cell in self.shape]  ==  {[cell[1] + self.y for cell in self.shape]}\n')
         # Повертає список Y-координат для фігури із врахуванням поточного зміщення
+        
         return [cell[1] + self.y for cell in self.shape]
+        # return [cell[1] + self.y for cell in self.shape]
 
 
     def move_left(self):
@@ -185,7 +238,6 @@ class Tetromino:
         # if self.x + max_x < GRID_WIDTH - 1:
         if max(self.cell_x) < GRID_WIDTH - 1:
             self.x += 1
-
 
     def rotate(self):
         # Обертаємо фігуру на 90 градусів за годинниковою стрілкою
@@ -223,6 +275,8 @@ class Tetromino:
 def main():
     # grid = create_array_for_grid()
     all_coords = []
+
+    grid_binary = create_array_for_grid()
     
     # Випадковий вибір поточного тетроміно
     current_tetromino = get_tetromino()
@@ -257,19 +311,25 @@ def main():
             # !!!
             # Саме після заміни першого коду на другий (current_tetromino.shape на current_tetromino.cell_y)
             # фігури й почали доходити тільки до 360-ти пкс
-            if current_tetromino.y + max(cell[1] for cell in current_tetromino.shape) >= GRID_HEIGHT - 1:
+            # if current_tetromino.y + max(cell[1] for cell in current_tetromino.shape) >= GRID_HEIGHT + 2:  # фігури опускаються тільки на одну чарунку нижче, - більше не виходить...
+            
+            # if current_tetromino.y + max(cell[1] for cell in current_tetromino.shape) >= GRID_HEIGHT - 1:
+            if current_tetromino.y + max(cell[1] for cell in current_tetromino.shape) >= GRID_HEIGHT:
+
             # if current_tetromino.y + max(current_tetromino.cell_y) >= GRID_HEIGHT - 1:
                 # Тут буде зупинка фігури
-                print('if current_tetromino.y + max(current_tetromino.cell_y) >= GRID_HEIGHT - 1:')
-                print(f'all_coords == {all_coords}')
-                print(f'current_tetromino.cell_x == {current_tetromino.cell_x}')
-                print(f'current_tetromino.cell_y == {current_tetromino.cell_y}')
-                print(f'current_tetromino.shape == {current_tetromino.shape}')
+                # print('if current_tetromino.y + max(current_tetromino.cell_y) >= GRID_HEIGHT - 1:')
+                # print(f'all_coords == {all_coords}')
+                # print(f'current_tetromino.cell_x == {current_tetromino.cell_x}')
+                # print(f'current_tetromino.cell_y == {current_tetromino.cell_y}')
+                # print(f'current_tetromino.shape == {current_tetromino.shape}')
+
                 # all_coords = list_coords_bottom_field(all_coords, current_tetromino.shape, current_tetromino.color)
-                all_coords = list_coords_bottom_field(all_coords, current_tetromino.cell_x, current_tetromino.cell_y, current_tetromino.shape)
+                # all_coords = list_coords_bottom_field(all_coords, current_tetromino.cell_x, current_tetromino.cell_y, current_tetromino.shape)
+                all_coords = list_coords_bottom_field(all_coords, current_tetromino.cell_x, current_tetromino.cell_y)
                 # list(TETROMINO_SHAPES.keys())
-                print(f'all_coords == {all_coords}')
-                print('The end\n')
+                # print(f'all_coords = list_coords_bottom_field  >>>  all_coords == {all_coords}')
+                # print('The end\n')
                 
                 fix_tetromino = current_tetromino
 
@@ -283,13 +343,15 @@ def main():
                 # # приклад: (X, Y) == (7, 19)
 
                 list_cells_x_y = list(zip(fix_tetromino.cell_x, fix_tetromino.cell_y))
-                print(f'list_cells_x_y == {list_cells_x_y}')
+                # print(f'list_cells_x_y == {list_cells_x_y}')
 
                 # print_test(list_cells_x_y)
 
 
                 current_tetromino = next_tetromino
                 next_tetromino = get_tetromino()  # Новий блок згори
+
+                print(f'\nmain >> if current_time - last_drop_time > drop_speed: >>  all_coords == {all_coords}\n')
             else:
                 current_tetromino.move_down()
             
@@ -300,10 +362,10 @@ def main():
 
         draw_grid()
         current_tetromino.draw()
-
-        draw_bottom_field(all_coords, fix_tetromino.color)
-                
         draw_next_tetromino(next_tetromino.shape, next_tetromino.color)
+        
+        print(f'\nmain >> before draw_bottom_field(all_coords): >>  all_coords == {all_coords}\n')
+        draw_bottom_field(all_coords, fix_tetromino.color)
 
         # Оновлення екрану
         pygame.display.flip()
