@@ -64,6 +64,9 @@ TETROMINO_COLORS = {
 }
 
 def create_array_for_grid():
+
+    a = [item for _ in range(12)] # add some conflict code
+
     return [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
 
 
